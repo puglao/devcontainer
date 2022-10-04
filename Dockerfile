@@ -4,13 +4,21 @@ ARG TARGETPLATFORM
 
 # Install generic apt packages
 RUN apt update && apt install -y \
+    ca-certificates \
     curl \
     dnsutils \
     git \
+    gnupg \
     jq \
+    lsb-release \
+    make \
+    shellcheck \
     sudo \
+    unzip \
     vim \
-    zsh 
+    zsh
+
+
 RUN apt clean
 
 
@@ -68,10 +76,27 @@ RUN echo '# Extend zsh history file size\nexport HISTSIZE=1000000000\nexport SAV
 # Install yq
 ARG YQ_VERSION=v4.25.3
 ARG YQ_BINARY_ARCH=${TARGETARCH}
-RUN curl -sL https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${YQ_BINARY_ARCH}.tar.gz |\
-    tar xz && mv yq_linux_${YQ_BINARY_ARCH} /usr/bin/yq
+RUN curl -sL https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${YQ_BINARY_ARCH}.tar.gz | tar xz \
+    && mv yq_linux_${YQ_BINARY_ARCH} /usr/bin/yq \
+    && rm install-man-page.sh yq.1
 RUN yq shell-completion zsh > "/root/.oh-my-zsh/completions/_yq"
 RUN yq shell-completion zsh > "/home/vscode/.oh-my-zsh/completions/_yq"
+
+
+# Install hadolint
+ARG HADOLINT_VERSION=v2.10.0
+RUN curl https://github.com/hadolint/hadolint/releases/download/"${HADOLINT_VERSION}"/hadolint-Linux-"$(dpkg --print-architecture)" -o /usr/local/bin/hadolint \
+    && chmod +x /usr/local/bin/hadolint
+
+# Install dockercli
+RUN mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+    && echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+    $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+    && apt-get update \
+    && apt-get install docker-ce-cli -y
+
 
 CMD ["zsh"]
 
