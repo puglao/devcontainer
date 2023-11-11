@@ -24,6 +24,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and release devcontainer Multi-Platform
         uses: devcontainers/ci@v0.3
+        env:
+          BUILDX_NO_DEFAULT_ATTESTATIONS: true
         with:
           imageName: ghcr.io/puglao/devcontainer
           platform: linux/amd64,linux/arm64
